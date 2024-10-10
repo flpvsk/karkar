@@ -18,13 +18,12 @@ import type {
 import appStylesHref from "./app.css?url"
 import { userPrefs } from "./cookies.server"
 import { nanoid } from "nanoid"
-import { useState } from "react"
+import { UIMatch, useMatches } from "react-router"
+import { ID } from "./interfaces"
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: appStylesHref },
 ]
-
-type ID = string
 
 export const loader = async ({
   request,
@@ -45,7 +44,14 @@ export const loader = async ({
 
 export async function action({ request }: ActionFunctionArgs) {
   const bodyParams = await request.formData()
-  const userId = bodyParams.get("userId")
+  const userId = String(bodyParams.get("userId") ?? "")
+
+  if (userId.length < 3 || userId.length > 6 || userId.includes(" ")) {
+    throw new Error(
+      `User Id should be between 3 and 6 characters long, no spaces`,
+    )
+  }
+
   return json(
     { userId },
     {
@@ -56,9 +62,25 @@ export async function action({ request }: ActionFunctionArgs) {
   )
 }
 
+function isRouteMatch(routePath: string, routeMatches: UIMatch[]): boolean {
+  for (const match of routeMatches) {
+    if (match.id === routePath) return true
+  }
+  return false
+}
+
+function cx(candidates: Record<string, boolean>): string {
+  const names: string[] = []
+  for (const [name, val] of Object.entries(candidates)) {
+    if (val) names.push(name)
+  }
+  return names.join(" ")
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const { userId } = useLoaderData<typeof loader>()
-  const [isUserFormVisible, setIsUserFormVisible] = useState(false)
+  const matches = useMatches()
+
   return (
     <html lang="en">
       <head>
@@ -69,47 +91,55 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <header>
-          <div>Karkar – flashcards for Einbürgerungstest</div>
-          <div>
-            Current user: {userId}
-            {!isUserFormVisible && (
-              <button type="button" onClick={() => setIsUserFormVisible(true)}>
-                Change
-              </button>
-            )}
-          </div>
-          {isUserFormVisible && (
+          <div>Karkar – flashcards for Einbürgerungstest in Berlin</div>
+          <div className="userInfo">
+            <div className="userInfo__currentUser">Current user: {userId}</div>
             <Form
               key="user"
               id="user"
               method="post"
-              onSubmit={() => setIsUserFormVisible(false)}
+              className="userInfo__changeUserForm"
             >
-              <label htmlFor="userId">New user:</label>
+              <label htmlFor="userId">Change user to:</label>
               <input
+                className="userInfo__input"
                 defaultValue={userId}
+                maxLength={4}
                 type="text"
                 name="userId"
                 id="userId"
               />
               <button type="submit">Save</button>
-              <button type="button" onClick={() => setIsUserFormVisible(false)}>
-                Cancel
-              </button>
             </Form>
-          )}
+          </div>
         </header>
         <nav>
-          <ul>
+          <ul className="menu">
             <li>
-              <Link to="/">Practice</Link>
+              <Link
+                to="/"
+                className={cx({
+                  menu__menuItem: true,
+                  _matched: isRouteMatch("routes/_index", matches),
+                })}
+              >
+                Practice
+              </Link>
             </li>
             <li>
-              <Link to="/stats">Stats</Link>
+              <Link
+                to="/stats"
+                className={cx({
+                  menu__menuItem: true,
+                  _matched: isRouteMatch("routes/stats", matches),
+                })}
+              >
+                Stats
+              </Link>
             </li>
           </ul>
         </nav>
-        <main>{children}</main>
+        <main className="main">{children}</main>
         <footer></footer>
         <ScrollRestoration />
         <Scripts />
