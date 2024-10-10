@@ -76,9 +76,9 @@ export const loader = async (): Promise<TypedResponse<Question>> => {
 
 export async function action({ request }: ActionFunctionArgs) {
   const bodyParams = await request.formData()
-  const isSkip = !!bodyParams.get('skip')
-  let isShow = !!bodyParams.get('show')
-  const isCheck = !!bodyParams.get('check')
+  const isSkip = !!bodyParams.get("skip")
+  let isShow = !!bodyParams.get("show")
+  const isCheck = !!bodyParams.get("check")
   const answerId = bodyParams.get("answerId")
   const questionId = bodyParams.get("questionId")
   const question = questions.find((q) => q.id === questionId)
@@ -98,21 +98,33 @@ export async function action({ request }: ActionFunctionArgs) {
   return json({
     isCorrect,
     isShow,
-    questionId,
+    question,
+    answerId,
   })
 }
 
 export default function Index() {
-  const question = useLoaderData<typeof loader>()
+  let question = useLoaderData<typeof loader>()
   const result = useActionData<typeof action>()
+  console.log(question)
   console.log(result)
+  if (result?.isShow) {
+    question = result.question
+  }
   return (
     <div className="question">
-      {question.text}
-      <Form method="post">
+      <div className="question__text">{question.text}</div>
+      <Form method="post" className="question__form">
         <input type="hidden" name="questionId" value={question.id} />
         {question.answers.map((answer) => (
           <div key={`answer-${answer.id}`} className="question__answer">
+            <div className="question__check">
+              {result?.isShow && result.question.answerId === answer.id && "v"}
+              {result?.isShow &&
+                result.answerId === answer.id &&
+                result.question.answerId !== answer.id &&
+                "x"}
+            </div>
             <input
               id={`answer-${answer.id}`}
               name="answerId"

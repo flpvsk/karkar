@@ -64,3 +64,20 @@ input {
   padding-top: var(--u4);
   border-top: 1px solid grey;
 }
+
+.question__text {
+  margin-left: 1rem;
+  margin-bottom: var(--u4);
+}
+
+.question__check {
+  width: 1rem;
+}
+
+.question__answer {
+  display: flex;
+  margin-bottom: var(--u2);
+}
+
+.question__form {
+}
