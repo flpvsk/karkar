@@ -20,6 +20,7 @@ import { userPrefs } from "./cookies.server"
 import { nanoid } from "nanoid"
 import { UIMatch, useMatches } from "react-router"
 import { ID } from "./interfaces"
+import { cx } from "./utils/components"
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: appStylesHref },
@@ -67,14 +68,6 @@ function isRouteMatch(routePath: string, routeMatches: UIMatch[]): boolean {
     if (match.id === routePath) return true
   }
   return false
-}
-
-function cx(candidates: Record<string, boolean>): string {
-  const names: string[] = []
-  for (const [name, val] of Object.entries(candidates)) {
-    if (val) names.push(name)
-  }
-  return names.join(" ")
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
