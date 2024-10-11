@@ -1,4 +1,4 @@
-import { json } from "@remix-run/node"
+import { json, redirect } from "@remix-run/node"
 import {
   Form,
   Link,
@@ -29,13 +29,22 @@ export const links: LinksFunction = () => [
 export const loader = async ({
   request,
 }: LoaderFunctionArgs): Promise<TypedResponse<{ userId: ID }>> => {
-  const cookieHeader = request.headers.get("Cookie")
-  const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
-  let userId = cookie.userId
+  let userId = (new URL(request.url)).searchParams.get("userId")
   const headers: Record<string, string> = {}
 
+  if (userId) {
+    headers["Set-Cookie"] = await userPrefs.serialize({ userId })
+    return redirect("/", { headers })
+  }
+
   if (!userId) {
-    userId = nanoid(3)
+    const cookieHeader = request.headers.get("Cookie")
+    const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
+    userId = cookie.userId
+  }
+
+  if (!userId) {
+    userId = nanoid(4)
     headers["Set-Cookie"] = await userPrefs.serialize({ userId })
   }
 
