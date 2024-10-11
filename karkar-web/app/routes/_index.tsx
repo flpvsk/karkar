@@ -1,14 +1,19 @@
 import {
   json,
   redirect,
+  LoaderFunctionArgs,
   ActionFunctionArgs,
   MetaFunction,
   TypedResponse,
 } from "@remix-run/node"
 import { useLoaderData, useActionData } from "@remix-run/react"
 import { Form } from "react-router-dom"
-import { ID } from "~/interfaces"
+import { createAppContext } from "~/context"
+import { userPrefs } from "~/cookies.server"
+import { Question } from "~/interfaces"
+import { getNextQuestion } from "~/storage"
 import { cx } from "~/utils/components"
+import { getUserId } from "~/utils/requests"
 
 export const meta: MetaFunction = () => {
   return [
@@ -18,19 +23,6 @@ export const meta: MetaFunction = () => {
       content: "Flashcards for Einbürgerungstest",
     },
   ]
-}
-
-interface Answer {
-  id: ID
-  text: string
-}
-
-interface Question {
-  id: ID
-  name: string
-  text: string
-  answers: Answer[]
-  answerId: ID
 }
 
 const question1: Question = {
@@ -73,9 +65,13 @@ const question2: Question = {
 
 const questions = [question1, question2]
 
-export const loader = async (): Promise<TypedResponse<Question>> => {
-  const r = Math.floor(Math.random() * 2)
-  return json(questions[r])
+export const loader = async ({
+  request,
+}: LoaderFunctionArgs): Promise<TypedResponse<Question>> => {
+  const userId = await getUserId(request)
+  const ctx = await createAppContext({ userId })
+  const question = await getNextQuestion(ctx)
+  return json(question)
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -87,7 +83,6 @@ export async function action({ request }: ActionFunctionArgs) {
   const answerId = bodyParams.get("answerId")
   const questionId = bodyParams.get("questionId")
   const gotoQuestionName = bodyParams.get("gotoQuestionName")
-  const question = questions.find((q) => q.id === questionId)
 
   if (isGoto) {
     if (!gotoQuestionName) throw new Error(`Needs question id`)
@@ -101,6 +96,14 @@ export async function action({ request }: ActionFunctionArgs) {
     })
   }
 
+  const cookieHeader = request.headers.get("Cookie")
+  const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
+  const userId = cookie.userId
+
+  if (!userId) throw new Error(`User not logged in`)
+
+  const ctx = await createAppContext({ userId })
+  const question = await getNextQuestion(ctx)
   if (!question) throw new Error(`Question ${questionId} not found`)
 
   let isCorrect: boolean | null = null

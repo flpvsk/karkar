@@ -11,6 +11,7 @@ body {
   --color-main-bg: lightgrey;
   --color-main-text: #101010;
   --color-main-link: darkblue;
+  --color-error: darkred;
   --u: 4px;
   --u2: calc(var(--u) * 2);
   --u3: calc(var(--u) * 3);
@@ -65,12 +66,27 @@ button {
   margin-top: var(--u2);
   margin-bottom: var(--u2);
 }
+
 .userInfo__currentUser {
   margin-right: var(--u4);
+  line-height: 1.5rem;
 }
 
 .userInfo__changeUserForm {
+  display: flex;
+  flex-direction: column;
+}
 
+.userInfo__error {
+  color: var(--color-error);
+  font-size: 0.8rem;
+  min-height: 1rem;
+}
+
+.userInfo__inputBlock {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .userInfo__input {
@@ -183,6 +199,19 @@ button {
   margin-right: var(--u2);
 }
 
+.basicText {
+  line-height: 1.2rem;
+}
+
+.errorText {
+  line-height: 1.2rem;
+  color: var(--color-error);
+}
+
+.basicText p {
+  margin: 0 0 var(--u2) 0;
+}
+
 @media screen and (max-width: 600px) {
   .question__actionsBar {
     flex-direction: column-reverse;
@@ -222,6 +251,10 @@ button {
 
   .userInfo {
     flex-direction: column;
+  }
+
+  .userInfo__inputBlock {
+    justify-content: flex-start;
   }
 
 }

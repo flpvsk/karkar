@@ -72,6 +72,9 @@ module.exports = {
         "plugin:import/typescript",
         "plugin:prettier/recommended",
       ],
+      rules: {
+        "@typescript-eslint/no-explicit-any": "off",
+      },
     },
 
     // Node

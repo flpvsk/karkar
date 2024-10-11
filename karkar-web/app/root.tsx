@@ -8,6 +8,8 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useActionData,
+  useRouteError,
 } from "@remix-run/react"
 import type {
   ActionFunctionArgs,
@@ -29,7 +31,7 @@ export const links: LinksFunction = () => [
 export const loader = async ({
   request,
 }: LoaderFunctionArgs): Promise<TypedResponse<{ userId: ID }>> => {
-  let userId = (new URL(request.url)).searchParams.get("userId")
+  let userId = new URL(request.url).searchParams.get("userId")
   const headers: Record<string, string> = {}
 
   if (userId) {
@@ -57,13 +59,16 @@ export async function action({ request }: ActionFunctionArgs) {
   const userId = String(bodyParams.get("userId") ?? "")
 
   if (userId.length < 3 || userId.length > 6 || userId.includes(" ")) {
-    throw new Error(
-      `User Id should be between 3 and 6 characters long, no spaces`,
-    )
+    return json({
+      userId,
+      error: {
+        message: `User Id should be between 3 and 6 characters long, no spaces`,
+      },
+    })
   }
 
   return json(
-    { userId },
+    { userId, error: null },
     {
       headers: {
         ["Set-Cookie"]: await userPrefs.serialize({ userId }),
@@ -81,6 +86,7 @@ function isRouteMatch(routePath: string, routeMatches: UIMatch[]): boolean {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { userId } = useLoaderData<typeof loader>()
+  const actionData = useActionData<typeof action>()
   const matches = useMatches()
 
   return (
@@ -93,7 +99,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <header>
-          <div>Karkar – flashcards for Einbürgerungstest in Berlin</div>
+          <div>
+            <b>Flashcards for Einbürgerungstest in Berlin</b>
+          </div>
           <div className="userInfo">
             <div className="userInfo__currentUser">Current user: {userId}</div>
             <Form
@@ -102,16 +110,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
               method="post"
               className="userInfo__changeUserForm"
             >
-              <label htmlFor="userId">Change user to:</label>
-              <input
-                className="userInfo__input"
-                defaultValue={userId}
-                maxLength={4}
-                type="text"
-                name="userId"
-                id="userId"
-              />
-              <button type="submit">Save</button>
+              <div className="userInfo__inputBlock">
+                <label htmlFor="userId">Change user to:</label>
+                <input
+                  className="userInfo__input"
+                  defaultValue={userId}
+                  maxLength={4}
+                  type="text"
+                  name="userId"
+                  id="userId"
+                />
+                <button type="submit">Save</button>
+              </div>
+              <div className="userInfo__error">
+                {actionData?.error?.message}
+              </div>
             </Form>
           </div>
         </header>
@@ -138,6 +151,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 Stats
               </Link>
+              <Link
+                to="/about"
+                className={cx({
+                  menu__menuItem: true,
+                  _matched: isRouteMatch("routes/about", matches),
+                })}
+              >
+                About
+              </Link>
             </li>
           </ul>
         </nav>
@@ -152,4 +174,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return <Outlet />
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError()
+  return (
+    <html lang="en">
+      <head>
+        <title>Oh no!</title>
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        <div className="errorText">Error: {(error as Error)?.message}</div>
+        <Scripts />
+      </body>
+    </html>
+  )
 }
