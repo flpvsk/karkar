@@ -21,6 +21,15 @@ function getDb(): DatabaseSync {
       text TEXT
     ) STRICT`)
 
+    _db.exec(`CREATE TABLE log(
+      id TEXT PRIMARY KEY,
+      type TEXT,
+      questionId TEXT,
+      userAnswerId TEXT,
+      correctAnswerId TEXT,
+      isCorrect
+    ) STRICT`)
+
     const insertQ = _db.prepare(
       "INSERT INTO questions (id, name, text, answerId) " +
         "VALUES (?, ?, ?, ?)",

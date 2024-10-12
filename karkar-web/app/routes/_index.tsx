@@ -11,7 +11,7 @@ import { Form } from "react-router-dom"
 import { createAppContext } from "~/context"
 import { userPrefs } from "~/cookies.server"
 import { Question } from "~/interfaces"
-import { getNextQuestion } from "~/storage"
+import * as storage from "~/storage"
 import { cx } from "~/utils/components"
 import { getUserId } from "~/utils/requests"
 
@@ -70,7 +70,7 @@ export const loader = async ({
 }: LoaderFunctionArgs): Promise<TypedResponse<Question>> => {
   const userId = await getUserId(request)
   const ctx = await createAppContext({ userId })
-  const question = await getNextQuestion(ctx)
+  const question = await storage.getNextQuestion(ctx)
   return json(question)
 }
 
@@ -103,13 +103,22 @@ export async function action({ request }: ActionFunctionArgs) {
   if (!userId) throw new Error(`User not logged in`)
 
   const ctx = await createAppContext({ userId })
-  const question = await getNextQuestion(ctx)
+  const question = await storage.getQuestionById(
+    { id: qusetionid },
+    ctx
+  )
   if (!question) throw new Error(`Question ${questionId} not found`)
 
   let isCorrect: boolean | null = null
   if (isCheck) {
     isCorrect = question.answerId === answerId
     isShow = true
+    await storage.logCheck({
+      questionId: question,
+      userAnswerId: answerId,
+      correctAnswerId: question.answerId,
+      isCorrect,
+    })
   }
 
   if (isSkip) {
