@@ -102,27 +102,31 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (!userId) throw new Error(`User not logged in`)
 
+  if (isSkip) {
+    return redirect("/")
+  }
+
   const ctx = await createAppContext({ userId })
+  if (!questionId) throw new Error(`questionId requied`)
   const question = await storage.getQuestionById(
-    { id: qusetionid },
-    ctx
+    { id: questionId.toString() },
+    ctx,
   )
-  if (!question) throw new Error(`Question ${questionId} not found`)
 
   let isCorrect: boolean | null = null
   if (isCheck) {
+    if (!question) throw new Error(`Question ${questionId} not found`)
     isCorrect = question.answerId === answerId
     isShow = true
-    await storage.logCheck({
-      questionId: question,
-      userAnswerId: answerId,
-      correctAnswerId: question.answerId,
-      isCorrect,
-    })
-  }
-
-  if (isSkip) {
-    return redirect("/")
+    await storage.logCheck(
+      {
+        questionId: questionId.toString(),
+        userAnswerId: answerId?.toString(),
+        correctAnswerId: question.answerId,
+        isCorrect,
+      },
+      ctx,
+    )
   }
 
   return json({

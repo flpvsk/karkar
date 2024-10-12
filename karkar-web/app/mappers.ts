@@ -1,8 +1,11 @@
-import { Question } from "./interfaces"
+import { Answer, Question } from "./interfaces"
 
-export function mapSqlToQuestion(sqlQ: Record<string, string>): Question {
+export function mapSqlToQuestion(
+  sqlQ: Record<string, string>,
+  sqlA: Record<string, string>[]
+): Question {
   return {
     ...sqlQ,
-    answers: [],
+    answers: sqlA as any as Answer[]
   } as any as Question
 }

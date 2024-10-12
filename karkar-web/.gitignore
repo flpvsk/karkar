@@ -2,5 +2,6 @@ node_modules
 
 /.cache
 /build
+.tmp
 .env
 vite.config.ts.timestamp*

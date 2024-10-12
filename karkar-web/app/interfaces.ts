@@ -17,3 +17,17 @@ export interface Question {
   answers: Answer[]
   answerId: ID
 }
+
+export enum LogType {
+  check = "check",
+  skip = "skip",
+}
+
+export interface Log {
+  id: ID
+  type: LogType
+  questionId: ID
+  userAnswerId: ID
+  correctAnswerId: ID
+  isCorrect: boolean
+}
