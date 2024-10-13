@@ -35,27 +35,6 @@ function getDb(): DatabaseSync {
       isCorrect INTEGER,
       timestamp TEXT
     ) STRICT`)
-
-    const insertQ = _db.prepare(
-      "INSERT INTO questions (id, name, text, answerId) " +
-        "VALUES (?, ?, ?, ?)",
-    )
-    const insertA = _db.prepare(
-      "INSERT INTO answers (id, questionId, text) " + "VALUES (?, ?, ?)",
-    )
-
-    // TODO remove
-    try {
-      insertQ.run("q1", "1", "Question 1 text", "q1a1")
-      insertQ.run("q2", "2", "Question 2 text", "q2a2")
-
-      insertA.run("q1a1", "q1", "Answer 1 to Q1")
-      insertA.run("q1a2", "q1", "Answer 2 to Q1")
-      insertA.run("q1a3", "q1", "Answer 3 to Q1")
-
-      insertA.run("q2a1", "q2", "Answer 1 to Q2")
-      insertA.run("q2a2", "q2", "Answer 2 to Q2")
-    } catch {}
   }
 
   return _db
@@ -64,11 +43,11 @@ function getDb(): DatabaseSync {
 export async function getNextQuestion(ctx: AppContext): Promise<Question> {
   const db = getDb()
   const selectQuestionId = db.prepare(
-    "SELECT questions.id as questionId, MAX(log.timestamp) as timestamp" +
+    "SELECT questions.id as questionId, MAX(log.id) as timestamp" +
       " FROM questions" +
       " LEFT JOIN log" +
       " ON log.questionId = questions.id AND log.userId = :userId" +
-      " GROUP BY log.questionId ORDER BY log.id, questions.id" +
+      " GROUP BY questions.id ORDER BY log.id, questions.id" +
       " LIMIT 1",
   )
 

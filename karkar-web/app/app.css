@@ -123,7 +123,7 @@ button {
 
 .question__header {
   display: flex;
-  margin-bottom: var(--u4);
+  margin-bottom: var(--u8);
 }
 
 .question__name {
@@ -142,24 +142,28 @@ button {
 
 .question__answer {
   display: flex;
-  align-items: center;
-  margin-bottom: var(--u2);
+  align-items: flex-start;
+  margin-bottom: var(--u4);
 }
 
 .question__answer input {
   width: 1rem;
+  min-width: 1rem;
   height: 1.1rem;
+  min-height: 1.1rem;
   margin: 0 1rem 0 0;
   padding: 0;
 }
 
 .question__answer label {
-  height: 1.1rem;
+  line-height: 1.1rem;
 }
 
 .question__check {
   width: 1rem;
+  min-width: 1rem;
   height: 1.1rem;
+  min-height: 1.1rem;
 }
 
 .question__actionsBar {
