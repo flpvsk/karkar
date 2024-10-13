@@ -92,7 +92,7 @@ button {
 .userInfo__input {
   margin-left: var(--u2);
   margin-right: var(--u2);
-  width: 4rem;
+  width: 8rem;
 }
 
 .main {
@@ -205,6 +205,10 @@ button {
 
 .errorText {
   line-height: 1.2rem;
+  color: var(--color-error);
+}
+
+.errorColor {
   color: var(--color-error);
 }
 

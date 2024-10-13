@@ -1,4 +1,7 @@
-export function stringOrDefault(s: string | null | undefined, dflt: string): string {
+export function stringOrDefault(
+  s: string | null | undefined,
+  dflt: string,
+): string {
   if (isStringNotEmpty(s)) return s
   return dflt
 }

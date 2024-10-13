@@ -4,13 +4,12 @@ import {
   LoaderFunctionArgs,
   ActionFunctionArgs,
   MetaFunction,
-  TypedResponse,
 } from "@remix-run/node"
 import { useLoaderData, useActionData } from "@remix-run/react"
 import { Form } from "react-router-dom"
 import { createAppContext } from "~/context"
-import { userPrefs } from "~/cookies.server"
-import { Question } from "~/interfaces"
+import { ID, Question } from "~/interfaces"
+import { error, LoaderResult, ok } from "~/LoaderResult"
 import * as storage from "~/storage"
 import { cx } from "~/utils/components"
 import { getUserId } from "~/utils/requests"
@@ -25,125 +24,118 @@ export const meta: MetaFunction = () => {
   ]
 }
 
-const question1: Question = {
-  id: "q1",
-  text: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-  name: "1",
-  answerId: "q1a1",
-  answers: [
-    {
-      id: "q1a1",
-      text: "check 1",
-    },
-    {
-      id: "q1a2",
-      text: "check 2",
-    },
-  ],
-}
-
-const question2: Question = {
-  id: "q2",
-  name: "2",
-  text: "Question 2",
-  answerId: "q2a2",
-  answers: [
-    {
-      id: "q2a1",
-      text: "answer 1",
-    },
-    {
-      id: "q2a2",
-      text: "answer 2",
-    },
-    {
-      id: "q2a3",
-      text: "answer 3",
-    },
-  ],
-}
-
-const questions = [question1, question2]
-
 export const loader = async ({
   request,
-}: LoaderFunctionArgs): Promise<TypedResponse<Question>> => {
-  const userId = await getUserId(request)
-  const ctx = await createAppContext({ userId })
-  const question = await storage.getNextQuestion(ctx)
-  return json(question)
+}: LoaderFunctionArgs): LoaderResult<Question> => {
+  try {
+    const userId = await getUserId(request)
+    const ctx = await createAppContext({ userId })
+    const question = await storage.getNextQuestion(ctx)
+    return json(ok(question))
+  } catch (e) {
+    return json(error(e))
+  }
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-  const bodyParams = await request.formData()
-  const isSkip = !!bodyParams.get("skip")
-  let isShow = false
-  const isCheck = !!bodyParams.get("check")
-  const isGoto = !!bodyParams.get("goto")
-  const answerId = bodyParams.get("answerId")
-  const questionId = bodyParams.get("questionId")
-  const gotoQuestionName = bodyParams.get("gotoQuestionName")
+interface FormSubmitResult {
+  isCorrect: boolean | null
+  isShow: boolean
+  question: Question
+  answerId: ID | null
+}
 
-  if (isGoto) {
-    if (!gotoQuestionName) throw new Error(`Needs question id`)
-    const question = questions.find((q) => q.name === gotoQuestionName)
-    if (!question) throw new Error(`Question not found`)
-    return json({
-      isCorrect: null,
-      isShow: false,
-      question,
-      answerId: null,
-    })
-  }
+export async function action({
+  request,
+}: ActionFunctionArgs): LoaderResult<FormSubmitResult> {
+  try {
+    const userId = await getUserId(request)
+    const ctx = await createAppContext({ userId })
 
-  const cookieHeader = request.headers.get("Cookie")
-  const cookie = (await userPrefs.parse(cookieHeader)) ?? {}
-  const userId = cookie.userId
+    const bodyParams = await request.formData()
+    const isSkip = !!bodyParams.get("skip")
+    let isShow = false
+    const isCheck = !!bodyParams.get("check")
+    const isGoto = !!bodyParams.get("goto")
+    const answerId = bodyParams.get("answerId")?.toString()
+    const questionId = bodyParams.get("questionId")?.toString()
+    const gotoQuestionName = bodyParams.get("gotoQuestionName")
 
-  if (!userId) throw new Error(`User not logged in`)
+    if (isGoto) {
+      if (!gotoQuestionName) throw new Error(`Needs question name`)
+      const question = await storage.getQuestionByName(
+        {
+          name: gotoQuestionName.toString(),
+        },
+        ctx,
+      )
+      if (!question) throw new Error(`Question not found`)
+      return json(
+        ok({
+          isCorrect: null,
+          isShow: false,
+          question,
+          answerId: null,
+        }),
+      )
+    }
 
-  if (isSkip) {
-    return redirect("/")
-  }
+    if (!userId) throw new Error(`User not logged in`)
 
-  const ctx = await createAppContext({ userId })
-  if (!questionId) throw new Error(`questionId requied`)
-  const question = await storage.getQuestionById(
-    { id: questionId.toString() },
-    ctx,
-  )
+    if (isSkip) {
+      return redirect("/")
+    }
 
-  let isCorrect: boolean | null = null
-  if (isCheck) {
-    if (!question) throw new Error(`Question ${questionId} not found`)
-    isCorrect = question.answerId === answerId
-    isShow = true
-    await storage.logCheck(
-      {
-        questionId: questionId.toString(),
-        userAnswerId: answerId?.toString(),
-        correctAnswerId: question.answerId,
+    if (!questionId) throw new Error(`questionId requied`)
+    const question = await storage.getQuestionById({ id: questionId }, ctx)
+
+    let isCorrect: boolean | null = null
+    if (isCheck) {
+      if (!question) throw new Error(`Question ${questionId} not found`)
+      isCorrect = question.answerId === answerId
+      isShow = true
+      await storage.logCheck(
+        {
+          questionId: questionId,
+          userAnswerId: answerId,
+          correctAnswerId: question.answerId,
+          isCorrect,
+        },
+        ctx,
+      )
+    }
+
+    return json(
+      ok({
         isCorrect,
-      },
-      ctx,
+        isShow,
+        question,
+        answerId: answerId ?? null,
+      }),
     )
+  } catch (e) {
+    return json(error(e))
   }
-
-  return json({
-    isCorrect,
-    isShow,
-    question,
-    answerId,
-  })
 }
 
 export default function Index() {
-  let question = useLoaderData<typeof loader>()
-  const result = useActionData<typeof action>()
+  const loaderData = useLoaderData<typeof loader>()
+  const actionData = useActionData<typeof action>()
 
-  if (result) {
-    question = result.question
+  if (loaderData && loaderData.isError) {
+    return <div className="errorText">{loaderData.error.message}</div>
   }
+
+  let question = loaderData.data
+
+  if (actionData && actionData.isError) {
+    return <div className="errorText">{actionData.error.message}</div>
+  }
+
+  if (actionData && actionData.isOk) {
+    question = actionData.data.question
+  }
+
+  const data = actionData?.data
 
   return (
     <div className="mainGrid">
@@ -157,21 +149,20 @@ export default function Index() {
           {question.answers.map((answer) => (
             <div key={`answer-${answer.id}`} className="question__answer">
               <div className="question__check">
-                {result?.isShow &&
-                  result.question.answerId === answer.id &&
-                  "v"}
-                {result?.isShow &&
-                  result.answerId === answer.id &&
-                  result.question.answerId !== answer.id &&
-                  "x"}
+                {data?.isShow && data.question.answerId === answer.id && "v"}
+                {data?.isShow &&
+                  data.answerId === answer.id &&
+                  data.question.answerId !== answer.id && (
+                    <span className="errorColor">x</span>
+                  )}
               </div>
               <input
                 id={`answer-${answer.id}`}
                 name="answerId"
                 value={answer.id}
                 type="radio"
-                disabled={result?.isShow}
-                defaultChecked={result?.answerId === answer.id}
+                disabled={data?.isShow}
+                defaultChecked={data?.answerId === answer.id}
               />
               <label htmlFor={`answer-${answer.id}`}>{answer.text}</label>
             </div>
@@ -180,15 +171,15 @@ export default function Index() {
             <div
               className={cx({
                 question__actions: true,
-                _skooch: !!result?.isShow,
+                _skooch: !!data?.isShow,
               })}
             >
-              {result?.isShow && (
+              {data?.isShow && (
                 <button type="submit" name="skip" value="1">
                   Next
                 </button>
               )}
-              {!result?.isShow && (
+              {!data?.isShow && (
                 <>
                   <button type="submit" name="skip" value="1">
                     Skip

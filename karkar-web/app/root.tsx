@@ -23,6 +23,7 @@ import { nanoid } from "nanoid"
 import { UIMatch, useMatches } from "react-router"
 import { ID } from "./interfaces"
 import { cx } from "./utils/components"
+import { parseUserId, USER_ID_LENGTH } from "./validation"
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: appStylesHref },
@@ -35,6 +36,7 @@ export const loader = async ({
   const headers: Record<string, string> = {}
 
   if (userId) {
+    userId = parseUserId(userId)
     headers["Set-Cookie"] = await userPrefs.serialize({ userId })
     return redirect("/", { headers })
   }
@@ -46,9 +48,11 @@ export const loader = async ({
   }
 
   if (!userId) {
-    userId = nanoid(4)
+    userId = nanoid(USER_ID_LENGTH)
     headers["Set-Cookie"] = await userPrefs.serialize({ userId })
   }
+
+  userId = parseUserId(userId)
 
   const data = { userId }
   return json(data, { headers })
@@ -56,13 +60,15 @@ export const loader = async ({
 
 export async function action({ request }: ActionFunctionArgs) {
   const bodyParams = await request.formData()
-  const userId = String(bodyParams.get("userId") ?? "")
+  let userId = String(bodyParams.get("userId") ?? "")
 
-  if (userId.length < 3 || userId.length > 6 || userId.includes(" ")) {
+  try {
+    userId = parseUserId(userId)
+  } catch (e) {
     return json({
       userId,
       error: {
-        message: `User Id should be between 3 and 6 characters long, no spaces`,
+        message: (e as Error).message,
       },
     })
   }
@@ -115,7 +121,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <input
                   className="userInfo__input"
                   defaultValue={userId}
-                  maxLength={4}
+                  maxLength={8}
+                  minLength={8}
                   type="text"
                   name="userId"
                   id="userId"
