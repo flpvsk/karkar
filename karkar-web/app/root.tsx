@@ -50,6 +50,7 @@ export const loader = async ({
   if (!userId) {
     userId = nanoid(USER_ID_LENGTH)
     headers["Set-Cookie"] = await userPrefs.serialize({ userId })
+    return redirect("/", { headers })
   }
 
   userId = parseUserId(userId)
