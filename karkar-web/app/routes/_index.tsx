@@ -5,7 +5,7 @@ import {
   ActionFunctionArgs,
   MetaFunction,
 } from "@remix-run/node"
-import { useLoaderData, useActionData } from "@remix-run/react"
+import { useLoaderData, useActionData, useNavigation } from "@remix-run/react"
 import { Form } from "react-router-dom"
 import { createAppContext } from "~/context"
 import { ID, Question } from "~/interfaces"
@@ -120,6 +120,8 @@ export async function action({
 export default function Index() {
   const loaderData = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
+  const navigation = useNavigation()
+  const isSubmitting = navigation.state === "submitting"
 
   if (loaderData && loaderData.isError) {
     return <div className="errorText">{loaderData.error.message}</div>
@@ -147,7 +149,7 @@ export default function Index() {
         {question.image && (
           <div className="question__imageBlock">
             <img
-              alt="Question image"
+              alt="Question graphic"
               className="question__image"
               src={`images/${question.image}`}
             />
@@ -184,16 +186,31 @@ export default function Index() {
               })}
             >
               {data?.isShow && (
-                <button type="submit" name="skip" value="1">
+                <button
+                  type="submit"
+                  name="skip"
+                  value="1"
+                  disabled={isSubmitting}
+                >
                   Next
                 </button>
               )}
               {!data?.isShow && (
                 <>
-                  <button type="submit" name="skip" value="1">
+                  <button
+                    type="submit"
+                    name="skip"
+                    value="1"
+                    disabled={isSubmitting}
+                  >
                     Skip
                   </button>
-                  <button type="submit" name="check" value="1">
+                  <button
+                    type="submit"
+                    name="check"
+                    value="1"
+                    disabled={isSubmitting}
+                  >
                     Check
                   </button>
                 </>
@@ -205,7 +222,12 @@ export default function Index() {
                 name="gotoQuestionName"
                 type="text"
               />
-              <button name="goto" type="submit" value="1">
+              <button
+                name="goto"
+                type="submit"
+                value="1"
+                disabled={isSubmitting}
+              >
                 Go to question
               </button>
             </div>

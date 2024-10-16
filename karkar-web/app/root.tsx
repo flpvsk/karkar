@@ -94,6 +94,8 @@ function isRouteMatch(routePath: string, routeMatches: UIMatch[]): boolean {
 export function Layout({ children }: { children: React.ReactNode }) {
   const data = useLoaderData<typeof loader>()
   const userId = data?.userId
+  const actionData = useActionData<typeof action>()
+  const matches = useMatches()
 
   if (!userId) {
     return (
@@ -108,8 +110,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </html>
     )
   }
-  const actionData = useActionData<typeof action>()
-  const matches = useMatches()
 
   return (
     <html lang="en">

@@ -65,9 +65,9 @@ export async function getQuestionById(
 ): Promise<Question> {
   const db = getDb()
   const selectQ = db.prepare(
-    "SELECT "+
-    "id, name, text, image, answerId " +
-    "FROM questions WHERE id=:id LIMIT 1",
+    "SELECT " +
+      "id, name, text, image, answerId " +
+      "FROM questions WHERE id=:id LIMIT 1",
   )
   const sqlQ = selectQ.get({ id: query.id }) as
     | Record<string, string>
