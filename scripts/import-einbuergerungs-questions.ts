@@ -1,6 +1,7 @@
 import { parse } from "csv-parse/sync"
 import { DatabaseSync } from "node:sqlite"
 import fs from "node:fs"
+import path from "node:path"
 
 // https://gist.github.com/travisbrown/b9e99fc9272615b5f9ddf756b5e666b6
 const content = fs.readFileSync("./.tmp/einbürgerungstest.csv", "utf8")
@@ -13,6 +14,7 @@ const result = db.exec(
     id TEXT PRIMARY KEY,
     name TEXT,
     text TEXT,
+    image TEXT,
     answerId TEXT
   ) STRICT;` +
   `CREATE TABLE IF NOT EXISTS answers(
@@ -23,8 +25,8 @@ const result = db.exec(
 )
 
 const insertQ = db.prepare(
-  "INSERT INTO questions (id, name, text, answerId) " +
-    "VALUES (:id, :name, :text, :answerId)"
+  "INSERT INTO questions (id, name, text, image, answerId) " +
+    "VALUES (:id, :name, :text, :image, :answerId)"
 )
 
 const insertA = db.prepare(
@@ -33,11 +35,15 @@ const insertA = db.prepare(
 
 let i = 0
 for (const row of parsed.slice(1)) {
-  i += 1
   const questionName = row[0] as string
   const questionPad = questionName.padStart(3, '0')
   const questionId = `qst${questionPad}`
   const questionText = row[1] as string
+  let imageName: string | null = `${questionName}.png`
+  const imagePath = path.join("./.tmp/images", imageName)
+  if (!fs.existsSync(imagePath)) {
+    imageName = null
+  }
 
   let ansNum = 1
   let answerId: string | undefined
@@ -61,8 +67,11 @@ for (const row of parsed.slice(1)) {
     id: questionId,
     name: questionName,
     text: questionText,
+    image: imageName,
     answerId,
   })
+
+  i += 1
 }
 
 console.log(`${i} questions inserted`)

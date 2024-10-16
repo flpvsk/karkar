@@ -15,6 +15,7 @@ function getDb(): DatabaseSync {
       id TEXT PRIMARY KEY,
       name TEXT,
       text TEXT,
+      image TEXT,
       answerId TEXT
     ) STRICT`)
 
@@ -64,7 +65,9 @@ export async function getQuestionById(
 ): Promise<Question> {
   const db = getDb()
   const selectQ = db.prepare(
-    "SELECT id, name, text, answerId FROM questions WHERE id=:id LIMIT 1",
+    "SELECT "+
+    "id, name, text, image, answerId " +
+    "FROM questions WHERE id=:id LIMIT 1",
   )
   const sqlQ = selectQ.get({ id: query.id }) as
     | Record<string, string>
@@ -87,7 +90,7 @@ export async function getQuestionByName(
 ): Promise<Question> {
   const db = getDb()
   const selectQ = db.prepare(
-    "SELECT id, name, text, answerId FROM questions WHERE name=:name LIMIT 1",
+    "SELECT id, name, text, image, answerId FROM questions WHERE name=:name LIMIT 1",
   )
   const sqlQ = selectQ.get({ name: query.name }) as
     | Record<string, string>

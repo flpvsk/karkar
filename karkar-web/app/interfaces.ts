@@ -14,6 +14,7 @@ export interface Question {
   id: ID
   name: string
   text: string
+  image: string | null
   answers: Answer[]
   answerId: ID
 }

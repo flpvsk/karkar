@@ -144,6 +144,15 @@ export default function Index() {
           <div className="question__name">{question.name}</div>
           <div className="question__text">{question.text}</div>
         </div>
+        {question.image && (
+          <div className="question__imageBlock">
+            <img
+              alt="Question image"
+              className="question__image"
+              src={`images/${question.image}`}
+            />
+          </div>
+        )}
         <Form method="post" className="question__form">
           <input type="hidden" name="questionId" value={question.id} />
           {question.answers.map((answer) => (

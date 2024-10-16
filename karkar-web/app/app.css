@@ -126,9 +126,19 @@ button {
   margin-bottom: var(--u8);
 }
 
+.question__imageBlock {
+  display: flex;
+  width: 100%;
+  margin-bottom: var(--u8);
+}
+
+.question__image {
+  width: 100%;
+}
+
 .question__name {
   display: flex;
-  min-width: 2rem;
+  min-width: 3rem;
   font-weight: bold;
   align-items: first baseline;
   justify-content: flex-end;
@@ -151,7 +161,7 @@ button {
   min-width: 1rem;
   height: 1.1rem;
   min-height: 1.1rem;
-  margin: 0 1rem 0 0;
+  margin: 0 1rem 0 1rem;
   padding: 0;
 }
 
@@ -264,5 +274,4 @@ button {
   .userInfo__inputBlock {
     justify-content: flex-start;
   }
-
 }
