@@ -43,5 +43,5 @@ INSTANCE_ID=dev
 # Path to db
 SQLITE=.tmp/db.sqlite
 # URL of the site
-HOST=http://localhost:5173
+HOST_ADDR=http://localhost:5173
 ```
