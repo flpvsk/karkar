@@ -13,6 +13,7 @@ import {
 } from "@remix-run/react"
 import type {
   ActionFunctionArgs,
+  CookieSerializeOptions,
   LinksFunction,
   LoaderFunctionArgs,
   TypedResponse,
@@ -24,6 +25,7 @@ import { UIMatch, useMatches } from "react-router"
 import { ID } from "./interfaces"
 import { cx } from "./utils/components"
 import { parseUserId, USER_ID_LENGTH } from "./validation"
+import {addYears, differenceInSeconds} from "date-fns"
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: appStylesHref },
@@ -34,10 +36,11 @@ export const loader = async ({
 }: LoaderFunctionArgs): Promise<TypedResponse<{ userId: ID }>> => {
   let userId = new URL(request.url).searchParams.get("userId")
   const headers: Record<string, string> = {}
+  const cookieOpts = getUserCookieOpts(new Date())
 
   if (userId) {
     userId = parseUserId(userId)
-    headers["Set-Cookie"] = await userPrefs.serialize({ userId })
+    headers["Set-Cookie"] = await userPrefs.serialize({ userId }, cookieOpts)
     return redirect("/", { headers })
   }
 
@@ -49,7 +52,7 @@ export const loader = async ({
 
   if (!userId) {
     userId = nanoid(USER_ID_LENGTH)
-    headers["Set-Cookie"] = await userPrefs.serialize({ userId })
+    headers["Set-Cookie"] = await userPrefs.serialize({ userId }, cookieOpts)
     return redirect("/", { headers })
   }
 
@@ -59,9 +62,16 @@ export const loader = async ({
   return json(data, { headers })
 }
 
+function getUserCookieOpts(now: Date): CookieSerializeOptions {
+  const expires = addYears(now, 1)
+  const maxAge = differenceInSeconds(expires, now)
+  return { expires, maxAge }
+}
+
 export async function action({ request }: ActionFunctionArgs) {
   const bodyParams = await request.formData()
   let userId = String(bodyParams.get("userId") ?? "")
+  const cookieOpts = getUserCookieOpts(new Date())
 
   try {
     userId = parseUserId(userId)
@@ -78,7 +88,7 @@ export async function action({ request }: ActionFunctionArgs) {
     { userId, error: null },
     {
       headers: {
-        ["Set-Cookie"]: await userPrefs.serialize({ userId }),
+        ["Set-Cookie"]: await userPrefs.serialize({ userId }, cookieOpts),
       },
     },
   )
