@@ -125,15 +125,15 @@ function calculateRaiting(report: QuestionReport): number {
   let lastIsCorrectVal = 0
 
   if (isDefined(report.lastIsCorrect) && report.lastIsCorrect) {
-    lastIsCorrectVal = 1;
+    lastIsCorrectVal = 1
   }
 
   if (isDefined(report.lastIsCorrect) && !report.lastIsCorrect) {
-    lastIsCorrectVal = -10;
+    lastIsCorrectVal = -10
   }
 
   return (
-    0. +
+    0 +
     lastIsCorrectVal -
     Math.max(
       0.1 * Number(report.last24Score.attempts === 0),

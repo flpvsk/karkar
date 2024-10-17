@@ -24,9 +24,29 @@ export const meta: MetaFunction = () => {
   ]
 }
 
-interface PracticePageData {
+interface ShuffledQuestion {
   question: Question
+  seed: string
+}
+
+interface PracticePageData extends ShuffledQuestion {
   reports: QuestionReportFull[]
+}
+
+
+function shuffleAnswers(question: Question, seed?: string): ShuffledQuestion {
+  const s = seed ?? String(Math.random()).slice(2, 10)
+  const l = s.length
+  let i = 0
+  return {
+    question: {
+      ...question,
+      answers: [...question.answers].sort(
+        () => s.charCodeAt(i++ % l) - s.charCodeAt(i++ % l),
+      ),
+    },
+    seed: s,
+  }
 }
 
 export const loader = async ({
@@ -40,7 +60,7 @@ export const loader = async ({
     const question = await storage.getNextRatedQuestion(reportsForQuestion, ctx)
     return json(
       ok({
-        question,
+        ...shuffleAnswers(question),
         reports: recentReports,
       }),
     )
@@ -71,6 +91,7 @@ export async function action({
     const isGoto = !!bodyParams.get("goto")
     const answerId = bodyParams.get("answerId")?.toString()
     const questionId = bodyParams.get("questionId")?.toString()
+    const seed = bodyParams.get("seed")?.toString()
     const gotoQuestionName = bodyParams.get("gotoQuestionName")
 
     if (isGoto) {
@@ -87,7 +108,7 @@ export async function action({
         ok({
           isCorrect: null,
           isShow: false,
-          question,
+          ...shuffleAnswers(question),
           reports,
           answerId: null,
         }),
@@ -111,7 +132,7 @@ export async function action({
         ok({
           isCorrect: null,
           isShow: false,
-          question,
+          ...shuffleAnswers(question),
           reports,
           answerId: null,
         }),
@@ -143,7 +164,7 @@ export async function action({
       ok({
         isCorrect,
         isShow,
-        question,
+        ...shuffleAnswers(question, seed),
         reports,
         answerId: answerId ?? null,
       }),
@@ -165,6 +186,7 @@ export default function Index() {
 
   let question = loaderData.data.question
   let reports = loaderData.data.reports
+  let seed = loaderData.data.seed
 
   if (actionData && actionData.isError) {
     return <div className="errorText">{actionData.error.message}</div>
@@ -173,6 +195,7 @@ export default function Index() {
   if (actionData && actionData.isOk) {
     question = actionData.data.question
     reports = actionData.data.reports
+    seed = actionData.data.seed
   }
 
   const data = actionData?.data
@@ -195,6 +218,7 @@ export default function Index() {
         )}
         <Form method="post" className="question__form">
           <input type="hidden" name="questionId" value={question.id} />
+          <input type="hidden" name="seed" value={seed} />
           {question.answers.map((answer) => (
             <div key={`answer-${answer.id}`} className="question__answer">
               <div className="question__check">
