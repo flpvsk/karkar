@@ -1,6 +1,5 @@
 import {
   json,
-  redirect,
   LoaderFunctionArgs,
   ActionFunctionArgs,
   MetaFunction,
@@ -46,6 +45,7 @@ export const loader = async ({
       }),
     )
   } catch (e) {
+    console.error(e)
     return json(error(e))
   }
 }
@@ -96,8 +96,26 @@ export async function action({
 
     if (!userId) throw new Error(`User not logged in`)
 
-    if (isSkip || isNext) {
-      return redirect("/")
+    if (isNext || isSkip) {
+      if (isSkip && !!questionId) {
+        await storage.logSkip({ questionId }, ctx)
+      }
+
+      const reports = await storage.getRecentQuestionReports(undefined, ctx)
+      const reportsForQuestion = await storage.getQuestionReports(ctx)
+      const question = await storage.getNextRatedQuestion(
+        reportsForQuestion,
+        ctx,
+      )
+      return json(
+        ok({
+          isCorrect: null,
+          isShow: false,
+          question,
+          reports,
+          answerId: null,
+        }),
+      )
     }
 
     if (!questionId) throw new Error(`questionId requied`)
@@ -163,7 +181,7 @@ export default function Index() {
     <div className="mainGrid">
       <div className="question mainGrid__main">
         <div className="question__header">
-          <div className="question__name">{question.name}</div>
+          <h2 className="question__name">{question.name}</h2>
           <div className="question__text">{question.text}</div>
         </div>
         {question.image && (

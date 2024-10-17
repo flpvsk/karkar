@@ -12,7 +12,7 @@ import {
 import { mapSqlToQuestion } from "./mappers"
 import * as clock from "./clock"
 import { stringOrDefault } from "./utils/strings"
-import { differenceInHours } from "date-fns"
+import { differenceInHours, subMinutes } from "date-fns"
 
 let _db: DatabaseSync | undefined
 
@@ -126,11 +126,11 @@ export async function getRecentQuestionReports(
 ): Promise<QuestionReportFull[]> {
   const db = getDb()
   const questionIdQuery = db.prepare(
-    "SELECT DISTINCT questionId" +
-      " FROM log" +
-      " WHERE userId = :userId" +
-      " ORDER BY id desc" +
-      " LIMIT 10",
+    "SELECT DISTINCT questionId " +
+      "FROM log " +
+      "WHERE userId = :userId " +
+      "ORDER BY id desc " +
+      "LIMIT 10",
   )
   const questionIdLogs = questionIdQuery.all({
     userId: ctx.userId,
@@ -155,6 +155,7 @@ export async function getRecentQuestionReports(
     "SELECT id, questionId, timestamp, isCorrect" +
       " FROM log" +
       " WHERE userId = :userId" +
+      " AND type = 'check'" +
       " AND questionId IN (" +
       questionIds.map(() => `?`).join(", ") +
       ")" +
@@ -237,20 +238,18 @@ export async function getQuestionReports(
 ): Promise<QuestionReportFull[]> {
   const db = getDb()
   const logQuery = db.prepare(
-    "SELECT id, questionId, timestamp, isCorrect" +
-      " FROM log" +
-      " WHERE userId = :userId" +
-      " ORDER BY id",
+    `SELECT id, questionId, timestamp, isCorrect ` +
+      `FROM log ` +
+      `WHERE userId = :userId ` +
+      `AND type = "check" ` +
+      `ORDER BY id`,
   )
 
   const logs = logQuery.all({ userId: ctx.userId }) as LogQueryRecord[]
   const reports: Map<ID, QuestionReport> = new Map()
   const now = new Date()
 
-  let dropQuestionId = undefined
   for (const log of logs) {
-    dropQuestionId = log.questionId
-
     const hours = differenceInHours(now, log.timestamp)
     const isCorrect = Boolean(log.isCorrect ?? false)
     let report =
@@ -288,39 +287,76 @@ export async function getQuestionReports(
     })
   }
 
-  console.log(dropQuestionId)
-
-  const questionIdsQ = db.prepare(
-    `SELECT id, name FROM questions ` +
-    `WHERE id<>:dropQuestionId ` +
-    `ORDER BY id `
-  )
-  return (questionIdsQ.all({ dropQuestionId: dropQuestionId ?? "-1" }) as { id: ID; name: string }[])
-    .map<QuestionReportFull>((o) => {
-      const report = fullReports.get(o.id)
-      if (report) {
-        return {
-          ...report,
-          questionName: o.name,
-        }
-      }
-
+  const questionIdsQ = db.prepare(`SELECT id, name FROM questions ORDER BY id `)
+  return (
+    questionIdsQ.all() as { id: ID; name: string }[]
+  ).map<QuestionReportFull>((o) => {
+    const report = fullReports.get(o.id)
+    if (report) {
       return {
-        ...initReport(o.id),
+        ...report,
         questionName: o.name,
-        raiting: 0,
       }
-    })
-    .sort((r1, r2) => r1.raiting - r2.raiting)
+    }
+
+    return {
+      ...initReport(o.id),
+      questionName: o.name,
+      raiting: 0,
+    }
+  })
 }
 
 export async function getNextRatedQuestion(
   fullReports: QuestionReportFull[],
   ctx: AppContext,
 ): Promise<Question> {
-  const questionId = fullReports.at(0)?.questionId
-  if (!questionId) throw new Error(`No questions`)
-  return getQuestionById({ id: questionId }, ctx)
+  const db = getDb()
+  const skipQuestionIds: Set<ID> = new Set()
+  const lastCheckQuestionIdQ = db.prepare(
+    `SELECT questionId FROM log ` +
+      `WHERE type = "check" ` +
+      `AND userId = :userId ` +
+      `ORDER BY id desc ` +
+      `LIMIT 1`,
+  )
+  const lastCheckQuestionId = (
+    lastCheckQuestionIdQ.get({ userId: ctx.userId }) as
+      | { questionId: ID }
+      | undefined
+  )?.questionId
+
+  if (lastCheckQuestionId) {
+    skipQuestionIds.add(lastCheckQuestionId)
+  }
+
+  const skipLogQ = db.prepare(
+    `SELECT questionId FROM log ` +
+      `WHERE type = "skip" ` +
+      `AND userId = :userId ` +
+      `AND timestamp > :fromDate`,
+  )
+  const skipLogs = skipLogQ.all({
+    userId: ctx.userId,
+    fromDate: subMinutes(new Date(), 15).toISOString(),
+  }) as { questionId: ID }[]
+
+  for (const log of skipLogs) {
+    skipQuestionIds.add(log.questionId)
+  }
+
+  const sortedReports = [...fullReports].sort(
+    (r1, r2) => r1.raiting - r2.raiting,
+  )
+  for (const report of sortedReports) {
+    if (skipQuestionIds.has(report.questionId)) {
+      continue
+    }
+
+    return await getQuestionById({ id: report.questionId }, ctx)
+  }
+
+  throw new Error(`No questions`)
 }
 
 export async function getQuestionById(
@@ -430,9 +466,6 @@ export async function logSkip(
     userId: ctx.userId,
     timestamp: new Date().toISOString(),
     questionId: input.questionId,
-    userAnswerId: null,
-    correctAnswerId: null,
-    isCorrect: null,
   })
 }
 

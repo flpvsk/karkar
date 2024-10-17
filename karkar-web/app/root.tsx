@@ -6,7 +6,6 @@ import {
   Meta,
   Outlet,
   Scripts,
-  ScrollRestoration,
   useLoaderData,
   useActionData,
   useRouteError,
@@ -131,9 +130,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <header>
-          <div>
-            <b>Flashcards for Einbürgerungstest in Berlin</b>
-          </div>
+          <h1>Flashcards for Einbürgerungstest in Berlin</h1>
           <div className="userInfo">
             <div className="userInfo__currentUser">Current user: {userId}</div>
             <Form
@@ -198,7 +195,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </nav>
         <main className="main">{children}</main>
         <footer></footer>
-        <ScrollRestoration />
         <Scripts />
       </body>
     </html>

@@ -23,6 +23,23 @@ body {
   background-color: var(--color-main-bg);
   font-family: var(--font-main);
   color: var(--color-main-text);
+  margin: 0;
+}
+
+h1 {
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1em;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  line-height: 1em;
+}
+
+header, nav, main {
+  padding: 0 var(--u2);
 }
 
 input[type=text] {
@@ -144,6 +161,7 @@ button {
   align-items: first baseline;
   justify-content: flex-end;
   font-size: 2rem;
+  margin: 0;
 }
 
 .question__text {
@@ -192,13 +210,11 @@ button {
 }
 
 .question__actions {
-  /* margin-top: var(--u4); */
   bottom: 0rem;
   display: flex;
-  width: 100%;
-  max-width: 15rem;
+  width: calc(0.6 * (100vw - 16px) - var(--u2));
   justify-content: space-between;
-  padding-left: 3rem;
+  padding-left: 4rem;
 }
 
 .question__actions._skooch {
@@ -331,8 +347,19 @@ button {
 .reports__questionNumber {
   min-width: 2.4rem;
   text-align: right;
+  padding-right: var(--u2);
 }
 
 .reports__questionScore {
-  padding-left: var(--u2);
+}
+
+.reports__header {
+  margin: 2.4rem;
+  margin-top: 0;
+  margin-bottom: var(--u2);
+}
+
+.reports__hint {
+  margin-left: 2.4rem;
+  margin-bottom: var(--u2);
 }

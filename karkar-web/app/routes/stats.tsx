@@ -18,9 +18,7 @@ export const loader = async ({
   try {
     const userId = await getUserId(request)
     const ctx = await createAppContext({ userId })
-    const reports = (await storage.getQuestionReports(ctx)).sort((r1, r2) =>
-      r1.questionId > r2.questionId ? 1 : -1,
-    )
+    const reports = await storage.getQuestionReports(ctx)
     const question = await storage.getNextRatedQuestion(reports, ctx)
     return json(
       ok({
@@ -48,13 +46,13 @@ export default function Stats() {
             <th colSpan={5}>Correct / Attempts</th>
           </tr>
           <tr>
-            <th>Question</th>
+            <th>Q</th>
             <th>Raiting</th>
-            <th>Overall</th>
             <th>Last 24h</th>
             <th>Last 48h</th>
-            <th>Last 96h</th>
-            <th>Last 384h</th>
+            <th>Last 4d</th>
+            <th>Last 2w</th>
+            <th>Overall</th>
           </tr>
         </thead>
         <tbody>
@@ -69,10 +67,7 @@ export default function Stats() {
                   __subtle: Math.abs(report.raiting) < 0.0001,
                 })}
               >
-                {report.raiting}
-              </td>
-              <td className="__tdCenter">
-                <ScoreBlock score={report.overallScore} />
+                {Math.round(report.raiting * 10) / 10}
               </td>
               <td className="__tdCenter">
                 <ScoreBlock score={report.last24Score} />
@@ -85,6 +80,9 @@ export default function Stats() {
               </td>
               <td className="__tdCenter">
                 <ScoreBlock score={report.last384Score} />
+              </td>
+              <td className="__tdCenter">
+                <ScoreBlock score={report.overallScore} />
               </td>
             </tr>
           ))}
