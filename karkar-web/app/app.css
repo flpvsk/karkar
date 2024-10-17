@@ -8,9 +8,10 @@ html {
 
 body {
   --font-main: sans-serif;
-  --color-main-bg: lightgrey;
-  --color-main-text: #101010;
-  --color-main-link: darkblue;
+  --color-bg-main: lightgrey;
+  --color-text-main: #101010;
+  --color-text-secondary: #2f2f2f;
+  --color-link-main: darkblue;
   --color-error: darkred;
   --color-success: darkgreen;
   --u: 4px;
@@ -20,9 +21,9 @@ body {
   --u8: calc(var(--u) * 8);
   --u12: calc(var(--u) * 12);
   --u24: calc(var(--u) * 24);
-  background-color: var(--color-main-bg);
+  background-color: var(--color-bg-main);
   font-family: var(--font-main);
-  color: var(--color-main-text);
+  color: var(--color-text-main);
   margin: 0;
 }
 
@@ -68,7 +69,7 @@ button {
 }
 
 .menu__menuItem {
-  color: var(--color-main-link);
+  color: var(--color-link-main);
   text-decoration: none;
 }
 
@@ -205,7 +206,7 @@ button {
   align-items: center;
   width: 100%;
   border-top: 1px solid grey;
-  background-color: var(--color-main-bg);
+  background-color: var(--color-bg-main);
   padding-bottom: var(--u2);
 }
 
@@ -231,7 +232,22 @@ button {
 }
 
 .basicText {
-  line-height: 1.2rem;
+  line-height: 1.4rem;
+  max-width: 40rem;
+}
+
+.basicText h2 {
+  margin: var(--u4) 0;
+}
+
+.basicText h3:first-child {
+  margin-top: var(--u2);
+}
+
+.basicText h3 {
+  margin: var(--u8) 0 var(--u2) 0;
+  color: var(--color-text-secondary);
+  font-weight: bold;
 }
 
 .errorText {
@@ -244,7 +260,7 @@ button {
 }
 
 .basicText p {
-  margin: 0 0 var(--u2) 0;
+  margin: 0 0 var(--u4) 0;
 }
 
 .stats__table {

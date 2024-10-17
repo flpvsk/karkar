@@ -11,7 +11,7 @@
     "check:fix": "npm run lint:fix && tsc",
     "start": "NODE_OPTIONS=--experimental-sqlite dotenv -e .env remix-serve ./build/server/index.js",
     "typecheck": "tsc",
-    "prepare": "husky"
+    "prepare": "cd .. && husky karkar-web/.husky"
   },
   "dependencies": {
     "@remix-run/node": "^2.12.1",

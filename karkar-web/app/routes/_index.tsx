@@ -33,7 +33,6 @@ interface PracticePageData extends ShuffledQuestion {
   reports: QuestionReportFull[]
 }
 
-
 function shuffleAnswers(question: Question, seed?: string): ShuffledQuestion {
   const s = seed ?? String(Math.random()).slice(2, 10)
   const l = s.length

@@ -46,4 +46,6 @@ This template comes with [Tailwind CSS](https://tailwindcss.com/) already config
 INSTANCE_ID=dev
 # Path to db
 SQLITE=.tmp/db.sqlite
+# URL of the site
+HOST=http://localhost:5173
 ```
