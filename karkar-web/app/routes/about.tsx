@@ -70,7 +70,7 @@ export default function About() {
       <p>Information that is storred for each user account:</p>
       <ul>
         <li>
-          Timestamp, question and answer every time user presses
+          Timestamp, user id, question and answer every time user presses
           &ldquo;Check&rdquo; or &ldquo;Skip&rdquo;
         </li>
       </ul>
