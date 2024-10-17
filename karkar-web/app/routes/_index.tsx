@@ -7,8 +7,9 @@ import {
 } from "@remix-run/node"
 import { useLoaderData, useActionData, useNavigation } from "@remix-run/react"
 import { Form } from "react-router-dom"
+import { QuestionReports } from "~/components/QuestionReports"
 import { createAppContext } from "~/context"
-import { ID, Question } from "~/interfaces"
+import { ID, Question, QuestionReportFull } from "~/interfaces"
 import { error, LoaderResult, ok } from "~/LoaderResult"
 import * as storage from "~/storage"
 import { cx } from "~/utils/components"
@@ -24,14 +25,26 @@ export const meta: MetaFunction = () => {
   ]
 }
 
+interface PracticePageData {
+  question: Question
+  reports: QuestionReportFull[]
+}
+
 export const loader = async ({
   request,
-}: LoaderFunctionArgs): LoaderResult<Question> => {
+}: LoaderFunctionArgs): LoaderResult<PracticePageData> => {
   try {
     const userId = await getUserId(request)
     const ctx = await createAppContext({ userId })
-    const question = await storage.getNextQuestion(ctx)
-    return json(ok(question))
+    const recentReports = await storage.getRecentQuestionReports(undefined, ctx)
+    const reportsForQuestion = await storage.getQuestionReports(ctx)
+    const question = await storage.getNextRatedQuestion(reportsForQuestion, ctx)
+    return json(
+      ok({
+        question,
+        reports: recentReports,
+      }),
+    )
   } catch (e) {
     return json(error(e))
   }
@@ -40,19 +53,19 @@ export const loader = async ({
 interface FormSubmitResult {
   isCorrect: boolean | null
   isShow: boolean
-  question: Question
   answerId: ID | null
 }
 
 export async function action({
   request,
-}: ActionFunctionArgs): LoaderResult<FormSubmitResult> {
+}: ActionFunctionArgs): LoaderResult<FormSubmitResult & PracticePageData> {
   try {
     const userId = await getUserId(request)
     const ctx = await createAppContext({ userId })
 
     const bodyParams = await request.formData()
     const isSkip = !!bodyParams.get("skip")
+    const isNext = !!bodyParams.get("next")
     let isShow = false
     const isCheck = !!bodyParams.get("check")
     const isGoto = !!bodyParams.get("goto")
@@ -68,12 +81,14 @@ export async function action({
         },
         ctx,
       )
+      const reports = await storage.getRecentQuestionReports(question.id, ctx)
       if (!question) throw new Error(`Question not found`)
       return json(
         ok({
           isCorrect: null,
           isShow: false,
           question,
+          reports,
           answerId: null,
         }),
       )
@@ -81,7 +96,7 @@ export async function action({
 
     if (!userId) throw new Error(`User not logged in`)
 
-    if (isSkip) {
+    if (isSkip || isNext) {
       return redirect("/")
     }
 
@@ -104,11 +119,14 @@ export async function action({
       )
     }
 
+    const reports = await storage.getRecentQuestionReports(question.id, ctx)
+
     return json(
       ok({
         isCorrect,
         isShow,
         question,
+        reports,
         answerId: answerId ?? null,
       }),
     )
@@ -127,7 +145,8 @@ export default function Index() {
     return <div className="errorText">{loaderData.error.message}</div>
   }
 
-  let question = loaderData.data
+  let question = loaderData.data.question
+  let reports = loaderData.data.reports
 
   if (actionData && actionData.isError) {
     return <div className="errorText">{actionData.error.message}</div>
@@ -135,6 +154,7 @@ export default function Index() {
 
   if (actionData && actionData.isOk) {
     question = actionData.data.question
+    reports = actionData.data.reports
   }
 
   const data = actionData?.data
@@ -188,7 +208,7 @@ export default function Index() {
               {data?.isShow && (
                 <button
                   type="submit"
-                  name="skip"
+                  name="next"
                   value="1"
                   disabled={isSubmitting}
                 >
@@ -235,7 +255,9 @@ export default function Index() {
         </Form>
       </div>
 
-      <div className="stats mainGrid__side">Stats go here</div>
+      <div className="mainGrid__side">
+        <QuestionReports reports={reports} />
+      </div>
     </div>
   )
 }

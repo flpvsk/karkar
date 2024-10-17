@@ -12,6 +12,7 @@ body {
   --color-main-text: #101010;
   --color-main-link: darkblue;
   --color-error: darkred;
+  --color-success: darkgreen;
   --u: 4px;
   --u2: calc(var(--u) * 2);
   --u3: calc(var(--u) * 3);
@@ -230,6 +231,44 @@ button {
   margin: 0 0 var(--u2) 0;
 }
 
+.stats__table {
+  border: 1px solid grey;
+  border-collapse: collapse;
+}
+
+.stats__table tbody tr:nth-child(odd) {
+  background-color: white;
+}
+
+.stats__table th {
+  font-size: 0.8rem;
+}
+
+.stats__table td {
+  font-size: 1rem;
+}
+
+.__tdCenter {
+  text-align: center;
+}
+
+.__success {
+  color: var(--color-success);
+}
+
+.__error {
+  color: var(--color-error);
+}
+
+.__subtle {
+  color: #a0a0a0;
+}
+
+.stats__table th, .stats__table td {
+  border: 1px solid grey;
+  padding: var(--u2);
+}
+
 @media screen and (max-width: 600px) {
   .question__actionsBar {
     flex-direction: column-reverse;
@@ -274,4 +313,26 @@ button {
   .userInfo__inputBlock {
     justify-content: flex-start;
   }
+}
+
+.reports__list {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.reports__listItem {
+  padding-bottom: var(--u2);
+  display: inline-flex;
+}
+
+.reports__questionNumber {
+  min-width: 2.4rem;
+  text-align: right;
+}
+
+.reports__questionScore {
+  padding-left: var(--u2);
 }

@@ -25,7 +25,7 @@ import { UIMatch, useMatches } from "react-router"
 import { ID } from "./interfaces"
 import { cx } from "./utils/components"
 import { parseUserId, USER_ID_LENGTH } from "./validation"
-import {addYears, differenceInSeconds} from "date-fns"
+import { addYears, differenceInSeconds } from "date-fns"
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: appStylesHref },
