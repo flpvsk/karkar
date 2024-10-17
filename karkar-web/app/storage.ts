@@ -7,6 +7,7 @@ import {
   QuestionReport,
   QuestionReportFull,
   Score,
+  LogType,
 } from "./interfaces"
 import { mapSqlToQuestion } from "./mappers"
 import * as clock from "./clock"
@@ -393,6 +394,7 @@ export async function logCheck(
 
   insertLog.run({
     id: clock.getNext(getInstanceId(), lastId),
+    type: LogType.check,
     parentId: lastId ?? null,
     userId: ctx.userId,
     timestamp: new Date().toISOString(),
@@ -423,6 +425,7 @@ export async function logSkip(
 
   insertLog.run({
     id: clock.getNext(getInstanceId(), lastId),
+    type: LogType.skip,
     parentId: lastId ?? null,
     userId: ctx.userId,
     timestamp: new Date().toISOString(),
