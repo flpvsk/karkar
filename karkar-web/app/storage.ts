@@ -12,6 +12,7 @@ import {
 import { mapSqlToQuestion } from "./mappers"
 import * as clock from "./clock"
 import { stringOrDefault } from "./utils/strings"
+import { isDefined } from "./utils/obj"
 import { differenceInHours, subMinutes } from "date-fns"
 
 let _db: DatabaseSync | undefined
@@ -120,6 +121,34 @@ function updateScore(
   }
 }
 
+function calculateRaiting(report: QuestionReport): number {
+  let lastIsCorrectVal = 0
+
+  if (isDefined(report.lastIsCorrect) && report.lastIsCorrect) {
+    lastIsCorrectVal = 1;
+  }
+
+  if (isDefined(report.lastIsCorrect) && !report.lastIsCorrect) {
+    lastIsCorrectVal = -10;
+  }
+
+  return (
+    0. +
+    lastIsCorrectVal -
+    Math.max(
+      0.1 * Number(report.last24Score.attempts === 0),
+      0.3 * Number(report.last48Score.attempts === 0),
+      0.5 * Number(report.last96Score.attempts === 0),
+      0.8 * Number(report.last384Score.attempts === 0),
+      1.0 * Number(report.overallScore.attempts === 0),
+    ) +
+    12 * (report.last24Score.percent ?? 0) +
+    6 * (report.last48Score.percent ?? 0) +
+    2 * (report.last96Score.percent ?? 0) +
+    1 * (report.last384Score.percent ?? 0)
+  )
+}
+
 export async function getRecentQuestionReports(
   prioritizeQuestionId: ID | undefined,
   ctx: AppContext,
@@ -188,17 +217,7 @@ export async function getRecentQuestionReports(
   > = new Map()
   for (const [questionId, report] of reports.entries()) {
     if (!report) continue
-    const raiting =
-      0 -
-      10 * (1 - Number(report.lastIsCorrect)) -
-      1 * Number(report.last24Score.attempts === 0) -
-      3 * Number(report.last48Score.attempts === 0) -
-      6 * Number(report.last96Score.attempts === 0) -
-      12 * Number(report.last384Score.attempts === 0) +
-      12 * (report.last24Score.percent ?? 0) +
-      6 * (report.last48Score.percent ?? 0) +
-      3 * (report.last96Score.percent ?? 0) +
-      1 * (report.last384Score.percent ?? 0)
+    const raiting = calculateRaiting(report)
 
     fullReports.set(questionId, {
       ...report,
@@ -221,10 +240,11 @@ export async function getRecentQuestionReports(
         }
       }
 
+      const newReport = initReport(o.id)
       return {
-        ...initReport(o.id),
+        ...newReport,
         questionName: o.name,
-        raiting: 0,
+        raiting: calculateRaiting(newReport),
       }
     })
     .sort(
@@ -269,17 +289,7 @@ export async function getQuestionReports(
   > = new Map()
   for (const [questionId, report] of reports.entries()) {
     if (!report) continue
-    const raiting =
-      0 -
-      10 * (1 - Number(report.lastIsCorrect)) -
-      1 * Number(report.last24Score.attempts === 0) -
-      3 * Number(report.last48Score.attempts === 0) -
-      6 * Number(report.last96Score.attempts === 0) -
-      12 * Number(report.last384Score.attempts === 0) +
-      12 * (report.last24Score.percent ?? 0) +
-      6 * (report.last48Score.percent ?? 0) +
-      3 * (report.last96Score.percent ?? 0) +
-      1 * (report.last384Score.percent ?? 0)
+    const raiting = calculateRaiting(report)
 
     fullReports.set(questionId, {
       ...report,
@@ -299,10 +309,15 @@ export async function getQuestionReports(
       }
     }
 
+    const newReport = initReport(o.id)
+    if (o.name === "14") {
+      console.log(newReport)
+      console.log(calculateRaiting(newReport))
+    }
     return {
-      ...initReport(o.id),
+      ...newReport,
       questionName: o.name,
-      raiting: 0,
+      raiting: calculateRaiting(newReport),
     }
   })
 }
