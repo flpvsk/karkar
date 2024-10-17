@@ -12,7 +12,7 @@ export const loader = async ({
 }: LoaderFunctionArgs): LoaderResult<AboutPageData> => {
   try {
     const userId = await getUserId(request)
-    const host = process.env.HOST ?? `http://localhost:5173`
+    const host = process.env.HOST_ADDR ?? `http://localhost:5173`
     const loginLink = `${host}/?userId=${userId}`
     return json(ok({ loginLink }))
   } catch (e) {
