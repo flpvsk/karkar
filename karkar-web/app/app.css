@@ -346,7 +346,8 @@ button {
   }
 
   .mainGrid__side {
-
+    padding-top: var(--u2);
+    padding-bottom: var(--u24);
   }
 
   .userInfo {
