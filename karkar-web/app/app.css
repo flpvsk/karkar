@@ -324,6 +324,7 @@ button {
   .question__actionsBar button, .question__actionsBar input {
     height: var(--u12);
     padding: var(--u4);
+    line-height: var(--u4);
   }
 
   .mainGrid {
