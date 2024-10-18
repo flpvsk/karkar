@@ -5,6 +5,7 @@ import {
   MetaFunction,
 } from "@remix-run/node"
 import { useLoaderData, useActionData, useNavigation } from "@remix-run/react"
+import { nanoid } from "nanoid"
 import { Form } from "react-router-dom"
 import { QuestionReports } from "~/components/QuestionReports"
 import { createAppContext } from "~/context"
@@ -34,15 +35,21 @@ interface PracticePageData extends ShuffledQuestion {
 }
 
 function shuffleAnswers(question: Question, seed?: string): ShuffledQuestion {
-  const s = seed ?? String(Math.random()).slice(2, 10)
-  const l = s.length
-  let i = 0
+  const s = seed ?? nanoid(question.answers.length)
+  const newAnswers = []
+  const answers = [...question.answers]
+  while (answers.length) {
+    let idx = s.charCodeAt(newAnswers.length % s.length)
+    if (isNaN(idx)) {
+      idx = 0
+    }
+    const [answer] = answers.splice(idx % answers.length, 1)
+    newAnswers.push(answer)
+  }
   return {
     question: {
       ...question,
-      answers: [...question.answers].sort(
-        () => s.charCodeAt(i++ % l) - s.charCodeAt(i++ % l),
-      ),
+      answers: newAnswers,
     },
     seed: s,
   }
