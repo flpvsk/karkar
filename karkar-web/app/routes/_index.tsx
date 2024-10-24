@@ -247,43 +247,39 @@ export default function Index() {
             </div>
           ))}
           <div className="question__actionsBar">
-            <div
-              className={cx({
-                question__actions: true,
-                _skooch: !!data?.isShow,
-              })}
-            >
-              {data?.isShow && (
+            {data?.isShow && (
+              <button
+                className="action_primary"
+                type="submit"
+                name="next"
+                value="1"
+                disabled={isSubmitting}
+              >
+                Next
+              </button>
+            )}
+            {!data?.isShow && (
+              <>
                 <button
+                  className="action_secondary"
                   type="submit"
-                  name="next"
+                  name="skip"
                   value="1"
                   disabled={isSubmitting}
                 >
-                  Next
+                  Skip
                 </button>
-              )}
-              {!data?.isShow && (
-                <>
-                  <button
-                    type="submit"
-                    name="skip"
-                    value="1"
-                    disabled={isSubmitting}
-                  >
-                    Skip
-                  </button>
-                  <button
-                    type="submit"
-                    name="check"
-                    value="1"
-                    disabled={isSubmitting}
-                  >
-                    Check
-                  </button>
-                </>
-              )}
-            </div>
+                <button
+                  className="action_primary"
+                  type="submit"
+                  name="check"
+                  value="1"
+                  disabled={isSubmitting}
+                >
+                  Check
+                </button>
+              </>
+            )}
             <div className="question__gotoBlock">
               <input
                 className="question__gotoInput"

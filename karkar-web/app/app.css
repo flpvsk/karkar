@@ -201,17 +201,33 @@ button {
 
 .question__actionsBar {
   position: fixed;
+  display: grid;
+  column-gap: var(--u2);
+  padding: 0 var(--u2);
+  grid-template-columns: auto auto 40vw;
+  grid-template-rows: auto;
+  grid-template-areas: "secondary primary tertiary";
+
   left: 0;
   bottom: 0;
   height: 4rem;
-  display: flex;
-  justify-content: space-between;
+  justify-items: end;
   align-items: center;
   width: 100%;
   border-top: 1px solid grey;
   background-color: var(--color-bg-main);
   padding-bottom: var(--u2);
 }
+
+.action_primary {
+  grid-area: primary;
+}
+
+.action_secondary {
+  grid-area: secondary;
+  justify-self: start;
+}
+
 
 .question__actions {
   bottom: 0rem;
@@ -226,7 +242,7 @@ button {
 }
 
 .question__gotoBlock {
-  margin-right: var(--u2);
+  grid-area: tertiary;
   display: flex;
 }
 
@@ -307,18 +323,14 @@ button {
 
 @media screen and (max-width: 600px) {
   .question__actionsBar {
-    flex-direction: column-reverse;
-    height: var(--u36);
-    padding-top: var(--u4);
-    justify-content: space-between;
+    grid-template-columns: var(--u2) 3.5rem auto 3.5rem var(--u2);
+    grid-template-areas: ". secondary tertiary primary .";
     background-color: var(--color-subtle);
     box-shadow: 0px 0px 4px 4px rgba(0,0,0,0.2)
   }
 
-  .question__actions {
-    padding: var(--u2);
-    width: 100%;
-    min-width: 100%;
+  .question__gotoBlock {
+    justify-self: center;
   }
 
   .question__actionsBar button, .question__actionsBar input {
