@@ -325,7 +325,7 @@ button {
   .question__actionsBar {
     grid-template-columns: 1fr 3fr 1fr;
     grid-template-areas: "secondary tertiary primary";
-    column-gap: var(--u4);
+    column-gap: var(--u3);
     background-color: var(--color-subtle);
     box-shadow: 0px 0px 4px 4px rgba(0,0,0,0.2)
   }
