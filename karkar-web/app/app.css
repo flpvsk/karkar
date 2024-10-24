@@ -323,8 +323,9 @@ button {
 
 @media screen and (max-width: 600px) {
   .question__actionsBar {
-    grid-template-columns: var(--u2) 3.5rem auto 3.5rem var(--u2);
+    grid-template-columns: var(--u2) 4rem auto 4rem var(--u2);
     grid-template-areas: ". secondary tertiary primary .";
+    column-gap: var(--u1);
     background-color: var(--color-subtle);
     box-shadow: 0px 0px 4px 4px rgba(0,0,0,0.2)
   }
