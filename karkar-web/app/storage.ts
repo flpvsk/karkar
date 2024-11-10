@@ -143,10 +143,12 @@ function calculateRaiting(report: QuestionReport): number {
       18 * Number(report.last384Score.attempts === 0),
       24 * Number(report.overallScore.attempts === 0),
     ) +
-    0.01 *
+    Math.min(
+      50,
       2 **
         (report.overallScore.attempts ** 1.2 *
-          (report.overallScore.percent ?? 0)) +
+          (report.overallScore.percent ?? 0)),
+    ) +
     Math.max(
       32 * (report.last24Score.percent ?? 0),
       24 * (report.last48Score.percent ?? 0),
