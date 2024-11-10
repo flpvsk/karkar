@@ -143,7 +143,7 @@ function calculateRaiting(report: QuestionReport): number {
       18 * Number(report.last384Score.attempts === 0),
       24 * Number(report.overallScore.attempts === 0),
     ) +
-    2 **
+    1.2 **
       (report.overallScore.attempts ** 1.2 *
         (report.overallScore.percent ?? 0)) +
     Math.max(
