@@ -114,7 +114,10 @@ function Frame({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Scripts />
+      </body>
     </html>
   )
 }
@@ -143,85 +146,78 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const userId = loaderData?.data?.userId
 
   return (
-    <html lang="en">
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <Meta />
-        <Links />
-      </head>
-      <body>
-        <header>
+    <Frame>
+      <header>
+        <div className="siteAndVersion">
           <h1>Flashcards for Einbürgerungstest in Berlin</h1>
-          <div className="userInfo">
-            <div className="userInfo__currentUser">Current user: {userId}</div>
-            <Form
-              key="user"
-              id="user"
-              method="post"
-              className="userInfo__changeUserForm"
+          <span className="__subtle">v1</span>
+        </div>
+        <div className="userInfo">
+          <div className="userInfo__currentUser">Current user: {userId}</div>
+          <Form
+            key="user"
+            id="user"
+            method="post"
+            className="userInfo__changeUserForm"
+          >
+            <div className="userInfo__inputBlock">
+              <label htmlFor="userId">Change user to:</label>
+              <input
+                className="userInfo__input"
+                defaultValue={userId}
+                maxLength={8}
+                minLength={8}
+                type="text"
+                name="userId"
+                id="userId"
+              />
+              <button type="submit">Change</button>
+            </div>
+            <div className="userInfo__error">
+              {actionData &&
+                isErrorResponse(actionData) &&
+                actionData?.error?.message}
+            </div>
+          </Form>
+        </div>
+      </header>
+      <nav>
+        <ul className="menu">
+          <li>
+            <Link
+              to="/"
+              className={cx({
+                menu__menuItem: true,
+                _matched: isRouteMatch("routes/_index", matches),
+              })}
             >
-              <div className="userInfo__inputBlock">
-                <label htmlFor="userId">Change user to:</label>
-                <input
-                  className="userInfo__input"
-                  defaultValue={userId}
-                  maxLength={8}
-                  minLength={8}
-                  type="text"
-                  name="userId"
-                  id="userId"
-                />
-                <button type="submit">Change</button>
-              </div>
-              <div className="userInfo__error">
-                {actionData &&
-                  isErrorResponse(actionData) &&
-                  actionData?.error?.message}
-              </div>
-            </Form>
-          </div>
-        </header>
-        <nav>
-          <ul className="menu">
-            <li>
-              <Link
-                to="/"
-                className={cx({
-                  menu__menuItem: true,
-                  _matched: isRouteMatch("routes/_index", matches),
-                })}
-              >
-                Practice
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/stats"
-                className={cx({
-                  menu__menuItem: true,
-                  _matched: isRouteMatch("routes/stats", matches),
-                })}
-              >
-                Stats
-              </Link>
-              <Link
-                to="/about"
-                className={cx({
-                  menu__menuItem: true,
-                  _matched: isRouteMatch("routes/about", matches),
-                })}
-              >
-                About
-              </Link>
-            </li>
-          </ul>
-        </nav>
-        <main className="main">{children}</main>
-        <footer></footer>
-        <Scripts />
-      </body>
-    </html>
+              Practice
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/stats"
+              className={cx({
+                menu__menuItem: true,
+                _matched: isRouteMatch("routes/stats", matches),
+              })}
+            >
+              Stats
+            </Link>
+            <Link
+              to="/about"
+              className={cx({
+                menu__menuItem: true,
+                _matched: isRouteMatch("routes/about", matches),
+              })}
+            >
+              About
+            </Link>
+          </li>
+        </ul>
+      </nav>
+      <main className="main">{children}</main>
+    </Frame>
   )
 }
 
