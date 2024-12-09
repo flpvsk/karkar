@@ -12,7 +12,6 @@ import { createAppContext } from "~/context"
 import { ID, Question, QuestionReportFull } from "~/interfaces"
 import { error, LoaderResult, ok } from "~/LoaderResult"
 import * as storage from "~/storage"
-import { cx } from "~/utils/components"
 import { getUserId } from "~/utils/requests"
 
 export const meta: MetaFunction = () => {
@@ -71,7 +70,6 @@ export const loader = async ({
       }),
     )
   } catch (e) {
-    console.error(e)
     return json(error(e))
   }
 }

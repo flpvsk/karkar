@@ -15,7 +15,6 @@ import type {
   CookieSerializeOptions,
   LinksFunction,
   LoaderFunctionArgs,
-  TypedResponse,
 } from "@remix-run/node"
 import appStylesHref from "./app.css?url"
 import { userPrefs } from "./cookies.server"
@@ -25,6 +24,14 @@ import { ID } from "./interfaces"
 import { cx } from "./utils/components"
 import { parseUserId, USER_ID_LENGTH } from "./validation"
 import { addYears, differenceInSeconds } from "date-fns"
+import { RandomLoginLink } from "./components/RandomLoginLink"
+import {
+  LoaderResult,
+  error,
+  isAuthErrorResponse,
+  isErrorResponse,
+  ok,
+} from "./LoaderResult"
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: appStylesHref },
@@ -32,15 +39,17 @@ export const links: LinksFunction = () => [
 
 export const loader = async ({
   request,
-}: LoaderFunctionArgs): Promise<TypedResponse<{ userId: ID }>> => {
-  let userId = new URL(request.url).searchParams.get("userId")
+}: LoaderFunctionArgs): LoaderResult<{ userId: ID }> => {
+  const url = new URL(request.url)
+  let userId = url.searchParams.get("userId")
+  const urlPath = url.pathname
   const headers: Record<string, string> = {}
   const cookieOpts = getUserCookieOpts(new Date())
 
   if (userId) {
     userId = parseUserId(userId)
     headers["Set-Cookie"] = await userPrefs.serialize({ userId }, cookieOpts)
-    return redirect("/", { headers })
+    return redirect(urlPath, { headers })
   }
 
   if (!userId) {
@@ -52,13 +61,17 @@ export const loader = async ({
   if (!userId) {
     userId = nanoid(USER_ID_LENGTH)
     headers["Set-Cookie"] = await userPrefs.serialize({ userId }, cookieOpts)
-    return redirect("/", { headers })
+    return redirect(urlPath, { headers })
   }
 
-  userId = parseUserId(userId)
+  try {
+    userId = parseUserId(userId)
 
-  const data = { userId }
-  return json(data, { headers })
+    const data = { userId }
+    return json(ok(data), { headers })
+  } catch (e) {
+    return json(error(e), { headers })
+  }
 }
 
 function getUserCookieOpts(now: Date): CookieSerializeOptions {
@@ -75,22 +88,14 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     userId = parseUserId(userId)
   } catch (e) {
-    return json({
-      userId,
-      error: {
-        message: (e as Error).message,
-      },
-    })
+    return json(error(e))
   }
 
-  return json(
-    { userId, error: null },
-    {
-      headers: {
-        ["Set-Cookie"]: await userPrefs.serialize({ userId }, cookieOpts),
-      },
+  return json(ok({ userId }), {
+    headers: {
+      ["Set-Cookie"]: await userPrefs.serialize({ userId }, cookieOpts),
     },
-  )
+  })
 }
 
 function isRouteMatch(routePath: string, routeMatches: UIMatch[]): boolean {
@@ -100,25 +105,42 @@ function isRouteMatch(routePath: string, routeMatches: UIMatch[]): boolean {
   return false
 }
 
+function Frame({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <Meta />
+        <Links />
+      </head>
+      <body>{children}</body>
+    </html>
+  )
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
-  const data = useLoaderData<typeof loader>()
-  const userId = data?.userId
+  const loaderData = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const matches = useMatches()
 
-  if (!userId) {
+  if (loaderData && isAuthErrorResponse(loaderData)) {
     return (
-      <html lang="en">
-        <head>
-          <meta charSet="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <Meta />
-          <Links />
-        </head>
-        <body>No userId</body>
-      </html>
+      <Frame>
+        <RandomLoginLink />
+      </Frame>
     )
   }
+
+  if (loaderData && isErrorResponse(loaderData)) {
+    return (
+      <Frame>
+        <div>Unknown error: {loaderData.error.message}</div>
+      </Frame>
+    )
+  }
+
+  const userId = loaderData?.data?.userId
 
   return (
     <html lang="en">
@@ -150,10 +172,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   name="userId"
                   id="userId"
                 />
-                <button type="submit">Save</button>
+                <button type="submit">Change</button>
               </div>
               <div className="userInfo__error">
-                {actionData?.error?.message}
+                {actionData &&
+                  isErrorResponse(actionData) &&
+                  actionData?.error?.message}
               </div>
             </Form>
           </div>

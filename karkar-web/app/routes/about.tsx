@@ -1,6 +1,7 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
-import { LoaderResult, ok, error } from "~/LoaderResult"
+import { LoaderResult, ok, error, isAuthErrorResponse } from "~/LoaderResult"
+import { RandomLoginLink } from "~/components/RandomLoginLink"
 import { getUserId } from "~/utils/requests"
 
 interface AboutPageData {
@@ -16,13 +17,16 @@ export const loader = async ({
     const loginLink = `${host}/?userId=${userId}`
     return json(ok({ loginLink }))
   } catch (e) {
-    console.error(e)
     return json(error(e))
   }
 }
 
 export default function About() {
   const loaderData = useLoaderData<typeof loader>()
+
+  if (isAuthErrorResponse(loaderData)) {
+    return <RandomLoginLink />
+  }
 
   if (loaderData && loaderData.isError) {
     return <div className="errorText">{loaderData.error.message}</div>
@@ -43,6 +47,11 @@ export default function About() {
         {` `}
         By the time you are reading this some of them are most likely out of
         date!
+      </p>
+      <h3>Typos</h3>
+      <p>
+        The text of questions was OCR&#39;d from the official web page and
+        contains typos.
       </p>
       <h3>Using multiple devices</h3>
       <p>

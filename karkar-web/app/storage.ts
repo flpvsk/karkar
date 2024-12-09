@@ -321,10 +321,6 @@ export async function getQuestionReports(
     }
 
     const newReport = initReport(o.id)
-    if (o.name === "14") {
-      console.log(newReport)
-      console.log(calculateRaiting(newReport))
-    }
     return {
       ...newReport,
       questionName: o.name,
